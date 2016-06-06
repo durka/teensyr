@@ -20,7 +20,7 @@ pub unsafe extern fn isr_systick() {
   i += 1;
   if i > 100 {
     i = 0;
-    global_on = !global_on;
+    global_on = (global_on + 1) % 5;
   }
 }
 
@@ -30,18 +30,22 @@ pub fn main() {
   watchdog::init(watchdog::State::Disabled);
 
   // Pins for Teensy 3.1 (http://www.pjrc.com/)
-  let led1 = pin::Pin::new(pin::Port::PortC, 5, pin::Function::Gpio, Some(zinc::hal::pin::Out));
+  let leds = [
+      pin::Pin::new(pin::Port::PortC,  5, pin::Function::Gpio, Some(zinc::hal::pin::Out)),
+      pin::Pin::new(pin::Port::PortA, 13, pin::Function::Gpio, Some(zinc::hal::pin::Out)),
+      pin::Pin::new(pin::Port::PortA, 12, pin::Function::Gpio, Some(zinc::hal::pin::Out)),
+      pin::Pin::new(pin::Port::PortD,  4, pin::Function::Gpio, Some(zinc::hal::pin::Out)),
+      pin::Pin::new(pin::Port::PortD,  7, pin::Function::Gpio, Some(zinc::hal::pin::Out)),
+  ];
 
-  systick::setup(systick::ten_ms().unwrap_or(480000));
+  systick::setup(systick::ten_ms().unwrap_or(480000)/10);
   systick::enable();
   systick::enable_irq();
 
   loop {
-    let on: bool = unsafe { volatile_load(&global_on as *const u32) == 0 };
-    match on {
-      true  => led1.set_high(),
-      false => led1.set_low(),
-    }
+    let on = unsafe { volatile_load(&global_on as *const u32) } as usize;
+    leds[on.checked_sub(1).unwrap_or(leds.len()-1)].set_low();
+    leds[on].set_high();
     wfi();
   }
 }
