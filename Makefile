@@ -1,7 +1,7 @@
 # Toolchain
 OBJCOPY=arm-none-eabi-objcopy
 OBJDUMP=arm-none-eabi-objdump
-LOADER=teensy_loader_cli
+LOADER=../teensy_loader_cli/teensy_loader_cli
 
 # Target
 TARGET=thumbv7em-none-eabi
@@ -16,7 +16,7 @@ all: build listing
 build: $(OUT_FILE).hex
 listing: $(OUT_FILE).lst
 
-$(OUT_FILE):
+$(OUT_FILE): blink.rs
 	cargo build --release --target=$(TARGET) --verbose
 
 $(OUT_DIR)/%.hex: $(OUT_DIR)/%
